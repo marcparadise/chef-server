@@ -1,6 +1,6 @@
 [{<<"crypto">>,
   {git,"git://github.com/jaym/erlang-crypto2",
-       {ref,"840ac49e1ba753719f9ed1986f6c230ce31eb875"}},
+       {ref,"fd43b4c3b743356ac3cfa9a36925f12e26be5659"}},
   0},
  {<<"edown">>,
   {git,"git://github.com/seth/edown.git",

@@ -28,7 +28,7 @@
   2},
  {<<"crypto">>,
   {git,"git://github.com/jaym/erlang-crypto2",
-       {ref,"2ad83b37566c334aad12c714a8bbf625539dadf9"}},
+       {ref,"fd43b4c3b743356ac3cfa9a36925f12e26be5659"}},
   0},
  {<<"darklaunch">>,
   {git,"git://github.com/opscode/opscode-darklaunch-erlang.git",
