@@ -233,24 +233,5 @@ include_recipe "private-chef::log_cleanup"
 include_recipe "private-chef::partybus"
 include_recipe "private-chef::ctl_config"
 include_recipe "private-chef::disable_chef_server_11"
+include_recipe "private-chef::chef-server-running"
 
-file "/etc/opscode/chef-server-running.json" do
-  owner OmnibusHelper.new(node).ownership['owner']
-  group "root"
-  mode "0600"
-
-  file_content = {
-    "private_chef" => node['private_chef'].to_hash,
-    "run_list" => node.run_list,
-    "runit" => node['runit'].to_hash
-  }
-  # back-compat fixes for opscode-reporting
-  # reporting uses the opscode-solr key for determining the location of the solr host,
-  # so we'll copy the contents over from opscode-solr4
-  file_content['private_chef']['opscode-solr'] ||= {}
-  %w{vip port}.each do |key|
-    file_content['private_chef']['opscode-solr'][key] = file_content['private_chef']['opscode-solr4'][key]
-  end
-
-  content Chef::JSONCompat.to_json_pretty(file_content)
-end
