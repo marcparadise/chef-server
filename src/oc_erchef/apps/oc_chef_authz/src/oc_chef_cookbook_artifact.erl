@@ -157,7 +157,7 @@ exists_by_authz_id(AuthzId) ->
 -spec filter_checksums_to_delete(OrgId :: object_id(),
                                  Checksums :: [binary()]) -> [binary()] | {error, _Why}.
 filter_checksums_to_delete(OrgId, Checksums) ->
-    case sqerl:select(checksums_referenced_by_cookbook_artifact_versions,
+    case sqeache_client:select(checksums_referenced_by_cookbook_artifact_versions,
                       [OrgId, Checksums],
                       rows_as_scalars,
                       [checksum]) of

@@ -25,7 +25,7 @@
                   kernel,
                   stdlib,
                   stats_hero,
-                  sqerl
+                  sqeache_client
                  ]},
   {env, []}
  ]}.

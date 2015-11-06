@@ -83,7 +83,7 @@ fetch_container(#oc_chef_authz_context{reqid = ReqId}, OrgId, ContainerName) ->
                           %% Couch removal note: keeping the name fetch_container_sql the same to avoid throwing off stats
                           {chef_sql, fetch_container_sql},
                           fun() ->
-                                  sqerl:select(find_container_by_orgid_name, [OrgId, ContainerName], Transform)
+                                  sqeache_client:select(find_container_by_orgid_name, [OrgId, ContainerName], Transform)
                           end) of
         {ok, #chef_container{} = C} ->
             C;

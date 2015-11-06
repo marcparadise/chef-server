@@ -1,3 +1,4 @@
+
 #
 # Copyright 2012-2014 Chef Software, Inc.
 #
@@ -10,31 +11,23 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# limitations under the License.
 # See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
-name "oc_erchef"
-source path: "#{project.files_path}/../../src/oc_erchef", options: {:exclude => ["_build"]}
+name "sqeache"
+default_version "master"
 
 dependency "erlang"
-dependency "gecode"
-dependency "sqitch"
-dependency "perl_pg_driver"
-dependency "sqeache"
 
-# RUBY DEPSOLVER - REMOVE FOR ROLLBACK #
-dependency "ruby"
-dependency "bundler"
-# END RUBY DEPSOLVER #
+source git: "git://github.com/marcparadise/sqeache.git"
 
 build do
   env = with_standard_compiler_flags(with_embedded_path)
-  env['USE_SYSTEM_GECODE'] = "1"
   env['REL_VERSION'] = "#{project.build_version}"
 
   make "omnibus", env: env
 
-  sync "#{project_dir}/_build/default/rel/oc_erchef/", "#{install_dir}/embedded/service/opscode-erchef/", exclude: ['**/.git', '**/.gitignore']
-  delete "#{install_dir}/embedded/service/opscode-erchef/log"
+  sync "#{project_dir}/_build/prod/rel/sqeache/", "#{install_dir}/embedded/service/sqeache/", exclude: ['**/.git', '**/.gitignore']
+  delete "#{install_dir}/embedded/service/sqeache/log"
 end

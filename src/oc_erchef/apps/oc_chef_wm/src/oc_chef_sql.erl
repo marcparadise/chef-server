@@ -29,7 +29,7 @@
 %% @doc Chef Server queries. Combines base statements
 %% from chef_sql with oc_chef_authz_db:statements.
 %%
-%% Referenced by sys.config in {sqerl, [{ prepared_staements...
+%% Referenced by sys.config in {sqeache_client, [{ prepared_staements...
 statements(_) ->
     chef_sql:statements() ++ oc_chef_authz_db:statements(pgsql).
 

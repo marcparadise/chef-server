@@ -11,7 +11,7 @@
                   stdlib,
                   crypto,
                   stats_hero,
-                  sqerl,
+                  sqeache_client,
                   gen_bunny,
                   ibrowse,
                   darklaunch,

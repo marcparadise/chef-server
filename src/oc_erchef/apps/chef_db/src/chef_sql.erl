@@ -122,7 +122,7 @@ sql_now() -> calendar:now_to_universal_time(os:timestamp()).
 -spec ping() -> pong | pang.
 ping() ->
     try
-        case sqerl:select(ping, [], rows_as_scalars, [ping]) of
+        case sqeache_client:select(ping, [], rows_as_scalars, [ping]) of
             {ok, [<<"pong">>]} -> pong;
             _Else -> throw(pang)
         end
@@ -139,7 +139,7 @@ ping() ->
 -spec count_nodes() -> {ok, none} | {ok, integer()} | {error, _}.
 %% Return a node count
 count_nodes() ->
-    sqerl:select(count_nodes, [], first_as_scalar, [count]).
+    sqeache_client:select(count_nodes, [], first_as_scalar, [count]).
 
 %%
 %% chef organization ops
@@ -149,7 +149,7 @@ count_nodes() ->
 -spec fetch_org_metadata(binary()) -> {binary(), binary()} | not_found | {error, term()}.
 fetch_org_metadata(OrgName) ->
     %% This would be neater if we had first_as_tuple or first_as_array
-    case sqerl:select(find_organization_by_name, [OrgName], first, []) of
+    case sqeache_client:select(find_organization_by_name, [OrgName], first, []) of
         {ok, none} ->
             not_found;
         {ok, L} when is_list(L) ->
@@ -167,7 +167,7 @@ fetch_org_metadata(OrgName) ->
 %%
 -spec is_user_in_org(binary(), binary()) -> boolean() | {error, _}.
 is_user_in_org(UserName, OrgName) ->
-    case sqerl:select(user_in_org, [UserName, OrgName], first_as_scalar, [count]) of
+    case sqeache_client:select(user_in_org, [UserName, OrgName], first_as_scalar, [count]) of
         {ok, 0} ->
             false;
         {ok, N} when is_integer(N) ->
@@ -182,7 +182,7 @@ is_user_in_org(UserName, OrgName) ->
 %%
 -spec list_common_orgs_for_users(binary(), binary()) -> [list()].
 list_common_orgs_for_users(User1Id, User2Id) ->
-    case sqerl:select(list_common_orgs_for_users, [User1Id, User2Id], rows) of
+    case sqeache_client:select(list_common_orgs_for_users, [User1Id, User2Id], rows) of
         {ok, none} ->
             [];
         {ok, L} when is_list(L) ->
@@ -198,7 +198,7 @@ fetch_actors_by_name(undefined, Name) ->
     fetch_actors_by_name(global, Name);
 fetch_actors_by_name(OrgId, Name) ->
     Transform = {rows_as_records, [chef_requestor, record_info(fields, chef_requestor)]},
-    Result = sqerl:select(fetch_requestors_by_name, [OrgId, Name], Transform),
+    Result = sqeache_client:select(fetch_requestors_by_name, [OrgId, Name], Transform),
     match_result(Result).
 
 
@@ -211,7 +211,7 @@ fetch_actors_by_name(OrgId, Name) ->
 %% @doc Return list of data_bag_item names for a given organization
 fetch_data_bag_item_ids(OrgId, DataBagName) ->
     QueryName = find_data_bag_item_id_by_orgid_name,
-    case sqerl:select(QueryName, [OrgId, DataBagName], rows_as_scalars, [id]) of
+    case sqeache_client:select(QueryName, [OrgId, DataBagName], rows_as_scalars, [id]) of
         {ok, L} when is_list(L) ->
             {ok, L};
         {ok, none} ->
@@ -231,7 +231,7 @@ fetch_data_bag_item_ids(OrgId, DataBagName) ->
 %% calls
 bulk_get_clients(ApiVersion, Ids) ->
     Query = chef_object:bulk_get_query(#chef_client{server_api_version = ApiVersion}),
-    case sqerl:select(Query, [Ids], ?ALL(chef_client)) of
+    case sqeache_client:select(Query, [Ids], ?ALL(chef_client)) of
         {ok, none} ->
             {ok, not_found};
         {ok, L} when is_list(L) ->
@@ -300,13 +300,13 @@ fetch_latest_cookbook_versions(OrgId, CookbookName, NumberOfVersions) ->
     Result = case {CookbookName, NumberOfVersions} of
                  {all, all} ->
                      %% All versions of all cookbooks
-                     sqerl:select(fetch_all_cookbook_versions_by_orgid, [OrgId]);
+                     sqeache_client:select(fetch_all_cookbook_versions_by_orgid, [OrgId]);
                  {all, _} ->
                      %% Some versions of all cookbooks
-                     sqerl:select(fetch_recent_cookbook_versions_by_orgid_and_num, [OrgId, NumberOfVersions]);
+                     sqeache_client:select(fetch_recent_cookbook_versions_by_orgid_and_num, [OrgId, NumberOfVersions]);
                  {_, all} ->
                      %% All versions of one cookbook
-                     sqerl:select(fetch_all_cookbook_versions_by_orgid_cookbook, [OrgId, CookbookName])
+                     sqeache_client:select(fetch_all_cookbook_versions_by_orgid_cookbook, [OrgId, CookbookName])
              end,
     case Result of
         {ok, none} ->
@@ -333,7 +333,7 @@ fetch_latest_cookbook_versions(OrgId, CookbookName, NumberOfVersions) ->
                                                                   SerializedObject::binary()}]} |
                                                            {error, term()}.
 fetch_latest_cookbook_recipes(OrgId) ->
-    case sqerl:select(fetch_latest_cookbook_recipes_by_orgid, [OrgId]) of
+    case sqeache_client:select(fetch_latest_cookbook_recipes_by_orgid, [OrgId]) of
         {ok, none} ->
             {ok, []};
         {ok, Rows} when is_list(Rows) ->
@@ -382,7 +382,7 @@ fetch_latest_cookbook_recipes(OrgId) ->
 -spec fetch_all_cookbook_version_dependencies(OrgId :: object_id()) -> {ok, [depsolver:dependency_set()]} |
                                                                        {error, term()}.
 fetch_all_cookbook_version_dependencies(OrgId) ->
-    case sqerl:select(fetch_all_cookbook_version_dependencies_by_orgid, [OrgId]) of
+    case sqeache_client:select(fetch_all_cookbook_version_dependencies_by_orgid, [OrgId]) of
         {ok, none} ->
             {ok, []};
         {ok, Rows} ->
@@ -523,7 +523,7 @@ fetch_environment_filtered_recipes(OrgId, Environment) ->
                                           [#chef_cookbook_version{}].
 bulk_fetch_minimal_cookbook_versions(OrgId, CookbookVersions) ->
     QueryParam = cookbook_versions_array_to_binary(CookbookVersions),
-    case sqerl:select(bulk_fetch_minimal_cookbook_versions, [OrgId, QueryParam], ?ALL(chef_cookbook_version)) of
+    case sqeache_client:select(bulk_fetch_minimal_cookbook_versions, [OrgId, QueryParam], ?ALL(chef_cookbook_version)) of
         {ok, none} ->
             [];
         {ok, Results} ->
@@ -574,7 +574,7 @@ fetch_cookbook_version(OrgId, {Name, {Major, Minor, Patch}}) ->
     %% This is coded following fetch_object similar to fetch_data_bag_item/3
     RecordName = chef_cookbook_version,
     {QueryName, FirstRecordTxfm} = query_and_txfm_for_record(fetch, RecordName),
-    case sqerl:select(QueryName, [OrgId, Name, Major, Minor, Patch], FirstRecordTxfm) of
+    case sqeache_client:select(QueryName, [OrgId, Name, Major, Minor, Patch], FirstRecordTxfm) of
         {ok, #chef_cookbook_version{} = CBVersion} ->
             case fetch_cookbook_version_checksums(OrgId, CBVersion#chef_cookbook_version.id) of
                 Checksums when is_list(Checksums) ->
@@ -605,7 +605,7 @@ fetch_cookbook_version(OrgId, {Name, {Major, Minor, Patch}}) ->
 fetch_latest_cookbook_version(OrgId, CookbookName) ->
   RecordName = chef_cookbook_version,
   {QueryName, FirstRecordTxfm} = query_and_txfm_for_record(fetch_latest, RecordName),
-  case sqerl:select(QueryName, [OrgId, CookbookName], FirstRecordTxfm) of
+  case sqeache_client:select(QueryName, [OrgId, CookbookName], FirstRecordTxfm) of
     {ok, none} ->
       not_found;
     {ok, #chef_cookbook_version{} = ResultRecord} ->
@@ -782,12 +782,12 @@ fetch_multi(ApiVersion, RecModule, QueryName, QueryParams) ->
                          chef_object:select_return()
                        | [epgsql:bind_param()].
 select_rows({Query, BindParameters}) ->
-    match_result(sqerl:select(Query, BindParameters));
+    match_result(sqeache_client:select(Query, BindParameters));
 select_rows({Query, BindParameters, Transform}) when is_tuple(Transform);
                                                      Transform == rows ->
-    match_result(sqerl:select(Query, BindParameters, Transform));
+    match_result(sqeache_client:select(Query, BindParameters, Transform));
 select_rows({Query, BindParameters, Fields = [_|_]}) ->
-    match_result(sqerl:select(Query, BindParameters, rows_as_scalars, Fields)).
+    match_result(sqeache_client:select(Query, BindParameters, rows_as_scalars, Fields)).
 
 -spec match_result(Input) -> NormalizedResult when
       Input :: {ok, list()} | {ok, none} | {ok, non_neg_integer()} | {ok, tuple()} | {error, term()},
@@ -829,7 +829,7 @@ delete_sandbox(SandboxId) when is_binary(SandboxId) ->
 mark_checksums_as_uploaded(_OrgId, []) ->
     ok;
 mark_checksums_as_uploaded(OrgId, [Checksum|Rest]) ->
-    case sqerl:statement(insert_checksum, [OrgId, Checksum], count) of
+    case sqeache_client:statement(insert_checksum, [OrgId, Checksum], count) of
         {ok, 1} ->
             mark_checksums_as_uploaded(OrgId, Rest);
         {conflict, _} ->
@@ -843,7 +843,7 @@ mark_checksums_as_uploaded(OrgId, [Checksum|Rest]) ->
 -spec non_uploaded_checksums(binary(), binary()) -> [binary()] | {error, term()}.
 non_uploaded_checksums(SandboxId, OrgId) when is_binary(SandboxId),
                                               is_binary(OrgId) ->
-    case sqerl:select(non_uploaded_checksums, [OrgId, SandboxId], rows_as_scalars, [checksum]) of
+    case sqeache_client:select(non_uploaded_checksums, [OrgId, SandboxId], rows_as_scalars, [checksum]) of
         {ok, none} ->
             [];
         {ok, Checksums} when is_list(Checksums) ->
@@ -856,7 +856,7 @@ non_uploaded_checksums(SandboxId, OrgId) when is_binary(SandboxId),
                           {ok, chef_object() | not_found} | {error, term()}.
 fetch_object(Keys, RecordName, QueryName, RecordFields) ->
     FirstRecordTxfm = {first_as_record, [RecordName, RecordFields]},
-    case sqerl:select(QueryName, Keys, FirstRecordTxfm) of
+    case sqeache_client:select(QueryName, Keys, FirstRecordTxfm) of
         %% Awkward sanity check that we got back the expected record type here.
         {ok, Object} when RecordName =:= element(1, Object) ->
             {ok, Object};
@@ -899,7 +899,7 @@ fetch_object_names(StubRec) ->
 %%
 bulk_get_objects(Type, Ids) ->
     Query = list_to_existing_atom("bulk_get_" ++ atom_to_list(Type) ++ "s"),
-    case sqerl:select(Query, [Ids], rows_as_scalars, [serialized_object]) of
+    case sqeache_client:select(Query, [Ids], rows_as_scalars, [serialized_object]) of
         {ok, none} ->
             {ok, not_found};
         {ok, L} when is_list(L) ->
@@ -915,7 +915,7 @@ bulk_get_objects(Type, Ids) ->
 %% @doc return a list of Authz IDs for the given IDs
 bulk_get_authz_ids(Type, Ids) ->
     Query = list_to_existing_atom("bulk_get_" ++ atom_to_list(Type) ++ "_authz_ids"),
-    case sqerl:select(Query, [Ids], rows, []) of
+    case sqeache_client:select(Query, [Ids], rows, []) of
         {ok, none} ->
             {ok, not_found};
         {ok, L} when is_list(L) ->
@@ -995,7 +995,7 @@ create_object(#chef_sandbox{id=SandboxId,
 %% chef_db for plain old cookbooks, their versions, and their checksums
 %% and at least, it's in a transaction
 create_object(insert_cookbook_artifact_version = QueryName, Args) when is_list(Args) ->
-    case sqerl:select(QueryName, Args) of
+    case sqeache_client:select(QueryName, Args) of
         {ok, [_Row]} -> {ok, 1};
         {ok, Else} -> {error, {unexpected_response, Else}};
         %% special error code for missing checksums
@@ -1004,7 +1004,7 @@ create_object(insert_cookbook_artifact_version = QueryName, Args) when is_list(A
         {conflict, _Why} = Conflict -> Conflict
     end;
 create_object(QueryName, Args) when is_atom(QueryName), is_list(Args) ->
-    sqerl:statement(QueryName, Args, count);
+    sqeache_client:statement(QueryName, Args, count);
 create_object(QueryName, Record) when is_atom(QueryName) ->
     List = chef_object:fields_for_insert(Record),
     create_object(QueryName, List).
@@ -1020,7 +1020,7 @@ create_object(QueryName, Record) when is_atom(QueryName) ->
 insert_cookbook_checksums([], _OrgId, _Name, _Major, _Minor, _Patch) ->
     ok;
 insert_cookbook_checksums([Checksum|Rest], OrgId, Name, Major, Minor, Patch) ->
-    case sqerl:statement(insert_cookbook_version_checksum, [Checksum, OrgId, Name, OrgId, Major, Minor, Patch], count) of
+    case sqeache_client:statement(insert_cookbook_version_checksum, [Checksum, OrgId, Name, OrgId, Major, Minor, Patch], count) of
         {ok, 1} ->
             insert_cookbook_checksums(Rest, OrgId, Name, Major, Minor, Patch);
         {foreign_key, _Reason} ->
@@ -1035,7 +1035,7 @@ insert_cookbook_checksums([Checksum|Rest], OrgId, Name, Major, Minor, Patch) ->
 unlink_checksums_from_cbv([], _OrgId, _CookbookVersionId) ->
     ok;
 unlink_checksums_from_cbv([Checksum|Rest], OrgId, CookbookVersionId) ->
-    case sqerl:statement(delete_cookbook_version_checksum, [Checksum, OrgId, CookbookVersionId], count) of
+    case sqeache_client:statement(delete_cookbook_version_checksum, [Checksum, OrgId, CookbookVersionId], count) of
         {ok, _Count} ->
             unlink_checksums_from_cbv(Rest, OrgId, CookbookVersionId);
         Error ->
@@ -1049,7 +1049,7 @@ delete_object(Rec) ->
 delete_object(delete_sandbox_by_id = Query, Id) ->
     %% Special-casing sandbox deletion, since it involves deleting multiple rows from a
     %% table, as opposed to one for all other Chef objects.
-    case sqerl:statement(Query, [Id]) of
+    case sqeache_client:statement(Query, [Id]) of
         {ok, N} when is_integer(N) ->
             {ok, 1}; %% We "pretend" there was only one thing to delete
         {ok, none} ->
@@ -1058,7 +1058,7 @@ delete_object(delete_sandbox_by_id = Query, Id) ->
             Error
     end;
 delete_object(Query, Id) ->
-    case sqerl:statement(Query, [Id]) of
+    case sqeache_client:statement(Query, [Id]) of
         {ok, 1} ->
             {ok, 1};
         {ok, none} ->
@@ -1069,7 +1069,7 @@ delete_object(Query, Id) ->
 
 delete_object(delete_cookbook_by_orgid_name = Query, OrgId, Name) ->
     %% Special-casing cookbook deletion, since we don't have an exposed ID
-    case sqerl:statement(Query, [OrgId, Name]) of
+    case sqeache_client:statement(Query, [OrgId, Name]) of
         {ok, 1} ->
             {ok, 1};
         {ok, none} ->
@@ -1082,7 +1082,7 @@ update(ObjectRec, ActorId) ->
     chef_object:update(ObjectRec, ActorId, fun select_rows/1).
 
 do_update(QueryName, UpdateFields) ->
-    case sqerl:statement(QueryName, UpdateFields) of
+    case sqeache_client:statement(QueryName, UpdateFields) of
         {ok, 1} -> {ok, 1};
         {ok, none} -> {ok, not_found};
         Error ->
@@ -1101,7 +1101,7 @@ do_update(QueryName, UpdateFields) ->
 insert_sandboxed_checksums([], _OrgId, _SandboxId, _CreatedAt) ->
     ok;
 insert_sandboxed_checksums([Checksum|Rest], OrgId, SandboxId, CreatedAt) ->
-    case sqerl:statement(insert_sandboxed_checksum, [OrgId, SandboxId, Checksum, CreatedAt], count) of
+    case sqeache_client:statement(insert_sandboxed_checksum, [OrgId, SandboxId, Checksum, CreatedAt], count) of
         {ok, 1} ->
             insert_sandboxed_checksums(Rest, OrgId, SandboxId, CreatedAt);
         %% If we don't get ok assume it's an error and pass it back up
@@ -1136,7 +1136,7 @@ create_cookbook_if_needed(#chef_cookbook_version{org_id = OrgId, name = Name}=Co
 create_cookbook_if_needed(false, #chef_cookbook_version{authz_id = AuthzId,
                                                         org_id = OrgId,
                                                         name = Name}) ->
-    case sqerl:statement(insert_cookbook, [AuthzId, OrgId, Name], count) of
+    case sqeache_client:statement(insert_cookbook, [AuthzId, OrgId, Name], count) of
         {ok, N} when is_integer(N) ->
             ok;
         Error ->
@@ -1152,7 +1152,7 @@ create_cookbook_if_needed({error, Reason}, _CookbookVersion) ->
 %% #chef_cookbook_version{id} field.
 %% @end
 %%
-%% TODO: We could extract out the case sqerl:select statement and logic for all the methods
+%% TODO: We could extract out the case sqeache_client:select statement and logic for all the methods
 %% that use rows_as_scalars transform
 -spec fetch_cookbook_version_checksums(OrgId::object_id(),
                                        CookbookVersionId::object_id()) ->
@@ -1160,7 +1160,7 @@ create_cookbook_if_needed({error, Reason}, _CookbookVersion) ->
 fetch_cookbook_version_checksums(OrgId, CookbookVersionId) when is_binary(OrgId),
                                                                 is_binary(CookbookVersionId) ->
     QueryName = list_cookbook_checksums_by_orgid_cookbook_versionid,
-    case sqerl:select(QueryName, [OrgId, CookbookVersionId], rows_as_scalars, [checksum]) of
+    case sqeache_client:select(QueryName, [OrgId, CookbookVersionId], rows_as_scalars, [checksum]) of
         {ok, none} ->
             [];
         {ok, Checksums} when is_list(Checksums) ->
@@ -1173,7 +1173,7 @@ fetch_cookbook_version_checksums(OrgId, CookbookVersionId) when is_binary(OrgId)
                            object_id() | not_found | {error, term()}.
 %% @doc helper function to return the AuthzId for a cookbook.
 fetch_cookbook_authz(OrgId, CookbookName) ->
-    case sqerl:select(find_cookbook_by_orgid_name,
+    case sqeache_client:select(find_cookbook_by_orgid_name,
                       [OrgId, CookbookName], rows_as_scalars, [authz_id]) of
         {ok, none} ->
             not_found;
@@ -1196,7 +1196,7 @@ unlink_all_checksums_from_cbv(OrgId, CookbookVersionId) ->
     % retrieve a list of checksums before we delete the
     % cookbook_version_checksums record
     Checksums = fetch_cookbook_version_checksums(OrgId, CookbookVersionId),
-    case sqerl:statement(delete_cookbook_checksums_by_orgid_cookbook_versionid,
+    case sqeache_client:statement(delete_cookbook_checksums_by_orgid_cookbook_versionid,
                             [OrgId, CookbookVersionId]) of
         {ok, _} ->
             {ok, delete_orphaned_checksums(OrgId, Checksums)};
@@ -1216,7 +1216,7 @@ delete_orphaned_checksums(OrgId, Checksums) ->
     %% cookbook artifact versions
     FilteredChecksums = oc_chef_cookbook_artifact:filter_checksums_to_delete(OrgId, Checksums),
     lists:foldl(fun(Checksum, Acc) ->
-            case sqerl:statement(delete_checksum_by_id, [OrgId, Checksum]) of
+            case sqeache_client:statement(delete_checksum_by_id, [OrgId, Checksum]) of
                 {ok, N} when is_integer(N) -> %% pretend there is 1
                     [Checksum|Acc];
                 {foreign_key, _} ->
@@ -1257,7 +1257,7 @@ delete_cookbook_if_last(OrgId, Name) ->
 %%
 %% extracted here for clarity and DRYness
 cookbook_versions_from_db(QueryName, Args) ->
-    case sqerl:select(QueryName, Args, rows, []) of
+    case sqeache_client:select(QueryName, Args, rows, []) of
         {ok, L} when is_list(L) ->
             {ok,
              [ [Name, triple_to_version_tuple(Major, Minor, Patch) ] || [Name, Major, Minor, Patch]  <- L]
@@ -1449,7 +1449,7 @@ finalize_versions({Cookbook, Versions}) ->
 -spec create_cookbook_version_dict(OrgId :: object_id()) -> {ok, dict()} |
                                                             {error, term()}.
 create_cookbook_version_dict(OrgId) ->
-    case sqerl:select(fetch_all_cookbook_version_ids_by_orgid, [OrgId]) of
+    case sqeache_client:select(fetch_all_cookbook_version_ids_by_orgid, [OrgId]) of
         {ok, none} ->
             {ok, dict:new()};
         {ok, Results} when is_list(Results) ->
@@ -1523,7 +1523,7 @@ fetch_cookbook_version_serialized_objects(UnprocessedIds, BatchSize, AllResults)
                                                                                     SerializedObject :: binary()}]} |
                                                                              {error, term()}.
 fetch_cookbook_version_serialized_objects_batch(Ids) when is_list(Ids)->
-    case sqerl:select(bulk_get_cbv_serialized_object, [Ids]) of
+    case sqeache_client:select(bulk_get_cbv_serialized_object, [Ids]) of
         {ok, none} ->
             {ok, []};
         {ok, Results} ->
@@ -1540,7 +1540,7 @@ fetch_cookbook_version_serialized_objects_batch(Ids) when is_list(Ids)->
     end.
 
 list_all_policy_revisions_by_orgid(OrgId) ->
-    case sqerl:select(list_all_policy_revisions_by_orgid, [OrgId]) of
+    case sqeache_client:select(list_all_policy_revisions_by_orgid, [OrgId]) of
         {ok, none} -> {ok, []};
         {ok, AllRevisionRows} ->
             Processed = [tuplize_policy_rev(Row) || Row <- AllRevisionRows],
@@ -1556,7 +1556,7 @@ tuplize_policy_rev(Row) ->
 
 
 find_all_policy_revisions_by_group_and_name(OrgId) ->
-    case sqerl:select(find_all_policy_revisions_by_group_and_name, [OrgId]) of
+    case sqeache_client:select(find_all_policy_revisions_by_group_and_name, [OrgId]) of
         {ok, none} ->
             {ok, []};
         {ok, Rows } ->
@@ -1567,7 +1567,7 @@ find_all_policy_revisions_by_group_and_name(OrgId) ->
     end.
 
 find_all_policy_revisions_associated_to_group(OrgId, GroupName) ->
-    case sqerl:select(find_all_policy_revisions_associated_to_group, [OrgId, GroupName]) of
+    case sqeache_client:select(find_all_policy_revisions_associated_to_group, [OrgId, GroupName]) of
         {ok, none} ->
             {ok, []};
         {ok, Rows } ->
@@ -1692,7 +1692,7 @@ create_dict(Query, Args, {Key, Value}) ->
 %% resultset as a list of proplists.
 -spec proplist_results(Query :: atom(), Args :: list()) -> [[tuple()]] | {error, term()}.
 proplist_results(Query, Args) ->
-    case sqerl:select(Query, Args) of
+    case sqeache_client:select(Query, Args) of
         {ok, L} when is_list(L) ->
             L;
         {ok, none} ->

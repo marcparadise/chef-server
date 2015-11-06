@@ -234,6 +234,51 @@ default['private_chef']['opscode-expander']['consumer_id'] = "default"
 default['private_chef']['opscode-expander']['nodes'] = 2
 
 ####
+# Database Proxy
+####
+
+default['private_chef']['sqeache']['enable'] = true
+default['private_chef']['sqeache']['ha'] = false
+default['private_chef']['sqeache']['dir'] = "/var/opt/opscode/sqeache"
+default['private_chef']['sqeache']['log_directory'] = "/var/log/opscode/sqeache"
+default['private_chef']['sqeache']['log_rotation']['file_maxbytes'] = 104857600
+default['private_chef']['sqeache']['log_rotation']['num_to_keep'] = 10
+default['private_chef']['sqeache']['log_rotation']['max_messages_per_second'] = 1000
+default['private_chef']['sqeache']['vip'] = '127.0.0.1'
+default['private_chef']['sqeache']['listen'] = '127.0.0.1'
+default['private_chef']['sqeache']['port'] = 6543
+# % TODO this will be per pool in the end.
+default['private_chef']['sqeache']['db_idle_check'] = 500
+#  How long will we wait for a connection?
+default['private_chef']['sqeache']['db_pool_timeout'] = 2000
+
+default['private_chef']['sqeache']['pools']['sqerl']['initial_worker_count'] = 20
+default['private_chef']['sqeache']['pools']['sqerl']['max_worker_count'] = 100
+default['private_chef']['sqeache']['pools']['sqerl']['max_queue_size'] = 20
+
+# Enable the various pruning checks, which endeavor to optimize the number of available
+# connections based on usage and age of connections
+# TODO straight up age, or just idle time?
+default['private_chef']['sqeache']['pools']['sqerl']['pruning']['enabled'] = true
+# Look to spin down connections at 60% or less utilization
+default['private_chef']['sqeache']['pools']['sqerl']['pruning']['spindown_threshold'] = 0.60
+# Check for connections to take down due if we're over provisioned, in  ms
+default['private_chef']['sqeache']['pools']['sqerl']['pruning']['spindown_frequency'] = 250
+
+# Oldest any connection is allowed to be in ms.  Connections will be pruned if they exceed
+# this age, as soon as they are checked in or if they are idle.
+default['private_chef']['sqeache']['pools']['sqerl']['pruning']['max_age'] = 5000
+
+# Suspend age checks when utilization is above this threshold, and resume when it falls below.
+# 1 to never suspend age checks, 0 to never enable age checks. Any number between represents
+# a percentage.
+default['private_chef']['sqeache']['pools']['sqerl']['pruning']['age_threshold'] = 0.85
+# TODO - per pool
+# default['private_chef']['sqeache']['pools']['sqerl']['max_queue_wait'] = 20
+#
+
+
+####
 # Erlang Chef Server API
 ####
 default['private_chef']['opscode-erchef']['enable'] = true
@@ -254,21 +299,6 @@ default['private_chef']['opscode-erchef']['sql_user'] = "opscode_chef"
 default['private_chef']['opscode-erchef']['sql_password'] = "snakepliskin"
 default['private_chef']['opscode-erchef']['sql_ro_user'] = "opscode_chef_ro"
 default['private_chef']['opscode-erchef']['sql_ro_password'] = "shmunzeltazzen"
-# Pool configuration for postgresql connections
-#
-# db_pool_size - the number of pgsql connections in the pool
-#
-# db_pool_queue_max - the maximum number of pgsql requests to queue up
-# if all connections are busy
-#
-# db_pooler_timeout - the maximum amount of time a request should wait
-# in the queue before timing out.  Request queueing is only effective
-# if db_pooler_timeout > 0
-default['private_chef']['opscode-erchef']['db_pool_size'] = 20
-default['private_chef']['opscode-erchef']['db_pool_queue_max'] = 20
-default['private_chef']['opscode-erchef']['db_pooler_timeout'] = 2000
-default['private_chef']['opscode-erchef']['sql_db_timeout'] = 5000
-
 # Pool configuration for depsolver workers
 #
 # depsolver_worker_count - the number of depselector workers.  This is

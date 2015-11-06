@@ -88,6 +88,14 @@ projects:
     type: ruby
     service:
       name: oc_id
+  sqeache:
+    type: erlang
+    external: true
+    service:
+      rel-type: rebar3
+      name: sqeache
+      cookie: sqeache_cookie
+      node: sqeache@127.0.0.1
   oc_bifrost:
     type: erlang
     database: bifrost

@@ -177,6 +177,7 @@ end
 [
   "rabbitmq",
   "postgresql",
+  "sqeache",
   "oc_bifrost",
   "oc_id",
   "opscode-solr4",

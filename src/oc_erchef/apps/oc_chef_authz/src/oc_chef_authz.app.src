@@ -23,6 +23,6 @@
   {applications, [kernel,
                   stdlib,
                   stats_hero,
-                  sqerl]},
+                  sqeache_client]},
   {mod, {oc_chef_authz_app, []}}
  ]}.
