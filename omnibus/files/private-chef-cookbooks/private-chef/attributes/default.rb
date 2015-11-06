@@ -238,19 +238,21 @@ default['private_chef']['opscode-expander']['nodes'] = 2
 ####
 
 default['private_chef']['sqeache']['enable'] = true
+default['private_chef']['sqeache']['vip'] = '127.0.0.1'
+default['private_chef']['sqeache']['listen'] = '127.0.0.1'
+default['private_chef']['sqeache']['port'] = 6543
 default['private_chef']['sqeache']['ha'] = false
 default['private_chef']['sqeache']['dir'] = "/var/opt/opscode/sqeache"
 default['private_chef']['sqeache']['log_directory'] = "/var/log/opscode/sqeache"
 default['private_chef']['sqeache']['log_rotation']['file_maxbytes'] = 104857600
 default['private_chef']['sqeache']['log_rotation']['num_to_keep'] = 10
 default['private_chef']['sqeache']['log_rotation']['max_messages_per_second'] = 1000
-default['private_chef']['sqeache']['vip'] = '127.0.0.1'
-default['private_chef']['sqeache']['listen'] = '127.0.0.1'
-default['private_chef']['sqeache']['port'] = 6543
 # % TODO this will be per pool in the end.
 default['private_chef']['sqeache']['db_idle_check'] = 500
 #  How long will we wait for a connection?
 default['private_chef']['sqeache']['db_pool_timeout'] = 2000
+# How many acceptors waiting to hear from clients?
+default['private_chef']['sqeache']['acceptor_count'] = 200
 
 default['private_chef']['sqeache']['pools']['sqerl']['initial_worker_count'] = 20
 default['private_chef']['sqeache']['pools']['sqerl']['max_worker_count'] = 100
