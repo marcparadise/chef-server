@@ -19,7 +19,7 @@
           {ip_mode, [<%=PrivateChef['use_ipv6'] ? "ipv6,ipv4" : "ipv4"%>]},
           %% Database connection parameters.
           {db_host, "<%= @pg_vip%>"},
-          {db_port, "<%= @pg_port%>"},
+          {db_port, <%= @pg_port%>},
           {db_user, "<%= @sql_user%>"},
           {db_pass, "<%= @sql_password%>"},
           {db_name, "opscode_chef"},
@@ -29,7 +29,7 @@
 
           {idle_check, <%= @sqeache['db_idle_check']%>},
             % TODO this will be per-db.
-          {prepared_statements, {sqeach_app, statements, []}},
+          {prepared_statements, {sqeache_app, statements, []}},
           {column_transforms, [{<<"created_at">>, {sqerl_transformers, convert_YMDHMS_tuple_to_datetime}},
                                {<<"updated_at">>, {sqerl_transformers, convert_YMDHMS_tuple_to_datetime}}]}
          ]

@@ -52,13 +52,12 @@
           %% opscode-chef-mover, FWIW.
           {error_logger_hwm, <%= @log_rotation['max_messages_per_second'] %>}
         ]},
- {squeache_client, [
+ {sqeache_client, [
                     {ip_mode, [ <%=PrivateChef['use_ipv6'] ? "ipv6,ipv4" : "ipv4" %> ] },
-                    {vip, <%=node['private_chef']['sqeache']['vip']%>},
-                    {port, <%=node['private_chef']['sqeache']['port']%>]}
+                    {vip, "<%=node['private_chef']['sqeache']['vip']%>"},
+                    {port, <%=node['private_chef']['sqeache']['port']%>}
                      % TODO - some more stuff like connection timeout, etc...
                    ]},
- }
  {oc_chef_wm, [
               {ip_mode, [ <%=PrivateChef['use_ipv6'] ? "ipv6,ipv4" : "ipv4" %> ] },
               {api_version, "<%= node['private_chef']['api_version'] %>"},
@@ -82,7 +81,6 @@
               {authz_fanout, <%= node['private_chef']['opscode-erchef']['authz_fanout'] %>},
 
               {enable_actions, <%= node['private_chef']['dark_launch']['actions'] %>},
-               ssibly useless use of a variable in void context'}
               <% if @ldap_enabled -%>
               {ldap, [{host, "<%= @helper.normalize_host(node['private_chef']['ldap']['host']) || "localhost" %>"},
                       {port, <%= node['private_chef']['ldap']['port'] || (@ssl_enabled ? 636 : 389) %> },

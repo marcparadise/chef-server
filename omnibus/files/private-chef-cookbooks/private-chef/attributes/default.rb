@@ -248,7 +248,7 @@ default['private_chef']['sqeache']['log_rotation']['file_maxbytes'] = 104857600
 default['private_chef']['sqeache']['log_rotation']['num_to_keep'] = 10
 default['private_chef']['sqeache']['log_rotation']['max_messages_per_second'] = 1000
 # % TODO this will be per pool in the end.
-default['private_chef']['sqeache']['db_idle_check'] = 500
+default['private_chef']['sqeache']['db_idle_check'] = 2000
 #  How long will we wait for a connection?
 default['private_chef']['sqeache']['db_pool_timeout'] = 2000
 # How many acceptors waiting to hear from clients?
