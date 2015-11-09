@@ -59,6 +59,8 @@ template erchef_config do
                                                                  :helper => OmnibusHelper.new(node)))
   notifies :run, 'execute[remove_erchef_siz_files]', :immediately
   notifies :restart, 'runit_service[opscode-erchef]' unless backend_secondary?
+  verify { |path| ErlangTemplateVerifier.new().verify(node, path)  }
+  sensitive true
 end
 
 # Erchef still ultimately uses disk_log [1] for request logging, and if

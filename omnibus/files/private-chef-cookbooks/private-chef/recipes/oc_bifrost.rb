@@ -56,6 +56,8 @@ template oc_bifrost_config do
   mode "644"
   variables(node['private_chef']['oc_bifrost'].to_hash)
   notifies :restart, 'runit_service[oc_bifrost]' unless backend_secondary?
+  verify { |path| ErlangTemplateVerifier.new().verify(node, path)  }
+  sensitive true
 end
 
 link "/opt/opscode/embedded/service/oc_bifrost/sys.config" do

@@ -116,8 +116,11 @@ template "#{oc_id_config_dir}/database.yml" do
   owner OmnibusHelper.new(node).ownership['owner']
   group OmnibusHelper.new(node).ownership['group']
   mode '640'
+  sensitive true
+  verify { |path|  YAMLTemplateVerifier.new().verify(node, path)  }
   notifies :restart, 'runit_service[oc_id]' unless backend_secondary?
 end
+
 database_file = "/opt/opscode/embedded/service/oc_id/config/database.yml"
 file database_file do
   action :delete

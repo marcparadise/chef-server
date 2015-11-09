@@ -1,0 +1,16 @@
+#!/opt/opscode/embedded/bin/ruby
+# ex ft=ruby
+require "yaml"
+
+begin
+  YAML.parse_file(ARGV[0])
+  exit 0
+rescue Psych::SyntaxError => e
+  $stderr.puts "#{e.line}:[Column #{e.column}] - #{e.problem}"
+rescue RuntimeError => e
+  $stderr.puts "0:#{e.message}"
+end
+exit 1
+
+
+

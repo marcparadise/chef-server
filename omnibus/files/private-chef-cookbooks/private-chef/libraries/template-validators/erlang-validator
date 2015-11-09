@@ -1,0 +1,19 @@
+%!/opt/opscode/embedded/bin/escript
+%% ex: ft=erlang ts=4 sw=4 et
+%% -*- erlang-indent-level: 4;indent-tabs-mode: nil; fill-column: 92 -*-
+
+main([Path]) ->
+  case file:consult(Path) of
+      {ok, _} ->
+          halt(0);
+      {error, {Line, {erl_parse, Term}}} when is_list(Term) ->
+          io:fwrite(standard_error, "~w:~s~n", [Line, lists:flatten(Term)]);
+      {error, {Line, {erl_parse, Term}}} ->
+          io:fwrite(standard_error, "~w:~s~n", [Line, lists:flatten(Term)]);
+      {error, {Line, _, Term}} ->
+          io:fwrite(standard_error, "~w:~s~n", [Line, Term]);
+      {error, Term} ->
+          io:fwrite(standard_error, "1:~p", [Term])
+  end,
+  halt(1).
+
