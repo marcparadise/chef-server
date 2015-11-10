@@ -26,6 +26,9 @@
 -include("oc_chef_types.hrl").
 -include("server_api_version.hrl").
 
+-define(ALL(Record), {rows_as_records, [Record, record_info(fields, Record)]}).
+-define(FIRST(Record), {first_as_record, [Record, record_info(fields, Record)]}).
+
 -export([container_record_to_authz_id/2,
          fetch_container/3,
          make_read_access_group_name/1,
@@ -43,7 +46,6 @@
 
 -include("oc_chef_authz.hrl").
 -include("oc_chef_authz_db.hrl").
--include_lib("sqerl/include/sqerl.hrl").
 
 %% TODO Fix:
 %% -include("chef_types.hrl").
@@ -83,7 +85,7 @@ fetch_container(#oc_chef_authz_context{reqid = ReqId}, OrgId, ContainerName) ->
                           %% Couch removal note: keeping the name fetch_container_sql the same to avoid throwing off stats
                           {chef_sql, fetch_container_sql},
                           fun() ->
-                                  sqeache_client:select(find_container_by_orgid_name, [OrgId, ContainerName], Transform)
+                                  sqeache_client:select(erchef,find_container_by_orgid_name, [OrgId, ContainerName], Transform)
                           end) of
         {ok, #chef_container{} = C} ->
             C;

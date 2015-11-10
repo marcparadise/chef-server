@@ -191,7 +191,7 @@ delete(#chef_cookbook_version{server_api_version = ApiVersion, org_id = OrgId} =
 delete(#oc_chef_cookbook_artifact_version{server_api_version = ApiVersion, org_id = OrgId} = CAVRec0, #context{reqid = ReqId}) ->
     CAVRec = chef_object:set_api_version(CAVRec0, ApiVersion),
     chef_object:delete(CAVRec, fun({QueryName, Params}) ->
-        case sqeache_client:select(QueryName, Params, rows_as_scalars, [checksum_to_delete]) of
+        case sqeache_client:select(erchef,erchef,QueryName, Params, rows_as_scalars, [checksum_to_delete]) of
             {ok, none} ->
                 %% no checksum deleted, but we did delete the artifact version, still
                 {ok, 1};

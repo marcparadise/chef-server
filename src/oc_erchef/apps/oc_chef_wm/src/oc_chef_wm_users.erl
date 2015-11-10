@@ -121,7 +121,7 @@ to_json(Req, State) ->
     end.
 
 verbose_users_as_ejson() ->
-    case sqeache_client:select(list_users_verbose, [], {rows_as_records, [chef_user, record_info(fields, chef_user)]}) of
+    case sqeache_client:select(erchef,list_users_verbose, [], {rows_as_records, [chef_user, record_info(fields, chef_user)]}) of
         {ok, none} ->
             {[{}]};
         {ok, Records} ->
