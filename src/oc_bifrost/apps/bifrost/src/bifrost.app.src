@@ -14,7 +14,6 @@
                   ej,
                   jiffy,
                   envy,
-                  sqerl,
                   opscoderl_wm,
                   runtime_tools,
                   tools

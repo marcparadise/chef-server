@@ -1,5 +1,6 @@
 %% -*- mode: erlang -*-
-%% -*- tab-width: 4;erlang-indent-level: 4;indent-tabs-mode: nil -*- %% ex: ts=4 sw=4 ft=erlang et
+%% -*- tab-width: 4;erlang-indent-level: 4;indent-tabs-mode: nil -*-
+%% ex: ts=4 sw=4 ft=eruby.erlang et
 %%
 %% oc_bifrost sys.config file
 %%
@@ -77,6 +78,12 @@
           %% opscode-chef-mover, FWIW.
           {error_logger_hwm, <%= @log_rotation['max_messages_per_second'] %>}
         ]},
+ {sqeache_client, [
+                    {ip_mode, [ <%=PrivateChef['use_ipv6'] ? "ipv6,ipv4" : "ipv4" %> ] },
+                    {vip, "<%=node['private_chef']['sqeache']['vip']%>"},
+                    {port, <%=node['private_chef']['sqeache']['port']%>}
+                     % TODO - some more stuff like connection timeout, etc...
+                   ]},
  {webmachine, [
           {log_handlers, [
                {oc_wm_request_logger, [
@@ -87,34 +94,12 @@
                        ]
                       }]}]
  },
- {sqerl, [
-          {db_driver_mod, sqerl_pgsql_client},
-          {ip_mode, [ <%=PrivateChef['use_ipv6'] ? "ipv6,ipv4" : "ipv4" %> ] },
-          {db_host, "<%= node['private_chef']['postgresql']['vip'] %>" },
-          {db_port, <%= node['private_chef']['postgresql']['port'] %> },
-          {db_user, "<%= node['private_chef']['oc_bifrost']['sql_user'] %>" },
-          {db_pass, "<%= node['private_chef']['oc_bifrost']['sql_password'] %>" },
-          {db_name, "bifrost" },
-          {idle_check, 10000},
-          {pooler_timeout, <%= @db_pooler_timeout %>},
-          {db_timeout, <%= node['private_chef']['oc_bifrost']['sql_db_timeout'] %>},
-          {prepared_statements, {bifrost_db, statements, []} },
-          {column_transforms, []}
-         ]},
  {stats_hero, [
                 {udp_socket_pool_size, <%= node['private_chef']['postgresql']['max_connections'] %> },
                 {protocol, <%= node['private_chef']['estatsd']['protocol'] %>},
                 {estatsd_host, "<%= node['private_chef']['estatsd']['vip'] %>" },
                 {estatsd_port, <%= node['private_chef']['estatsd']['port'] %> }
                ]},
- {pooler, [
-           {pools, [[{name, sqerl},
-                     {max_count, <%= @db_pool_size %> },
-                     {init_count, <%= @db_pool_size %> },
-                     {queue_max, <%= @db_pool_queue_max %>},
-                     {start_mfa, {sqerl_client, start_link, []}}]]}
-           %%,{metrics_module, folsom_metrics}
-          ]},
  {bifrost, [
              {ip, "<%= @listen %>" },
              {port, <%= @port %> },
