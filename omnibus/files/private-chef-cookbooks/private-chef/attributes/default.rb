@@ -252,33 +252,17 @@ default['private_chef']['sqeache']['db_idle_check'] = 2000
 #  How long will we wait for a connection?
 default['private_chef']['sqeache']['db_pool_timeout'] = 2000
 # How many acceptors waiting to hear from clients?
-default['private_chef']['sqeache']['acceptor_count'] = 200
-
-default['private_chef']['sqeache']['pools']['sqerl']['initial_worker_count'] = 20
-default['private_chef']['sqeache']['pools']['sqerl']['max_worker_count'] = 100
-default['private_chef']['sqeache']['pools']['sqerl']['max_queue_size'] = 20
-
-# Enable the various pruning checks, which endeavor to optimize the number of available
-# connections based on usage and age of connections
-# TODO straight up age, or just idle time?
-default['private_chef']['sqeache']['pools']['sqerl']['pruning']['enabled'] = true
-# Look to spin down connections at 60% or less utilization
-default['private_chef']['sqeache']['pools']['sqerl']['pruning']['spindown_threshold'] = 0.60
-# Check for connections to take down due if we're over provisioned, in  ms
-default['private_chef']['sqeache']['pools']['sqerl']['pruning']['spindown_frequency'] = 250
-
-# Oldest any connection is allowed to be in ms.  Connections will be pruned if they exceed
-# this age, as soon as they are checked in or if they are idle.
-default['private_chef']['sqeache']['pools']['sqerl']['pruning']['max_age'] = 5000
-
-# Suspend age checks when utilization is above this threshold, and resume when it falls below.
-# 1 to never suspend age checks, 0 to never enable age checks. Any number between represents
-# a percentage.
-default['private_chef']['sqeache']['pools']['sqerl']['pruning']['age_threshold'] = 0.85
-# TODO - per pool
-# default['private_chef']['sqeache']['pools']['sqerl']['max_queue_wait'] = 20
-#
-
+default['private_chef']['sqeache']['acceptor_count'] = 1024
+default['private_chef']['sqeache']['pools']['erchef']['initial_worker_count'] = 20
+default['private_chef']['sqeache']['pools']['erchef']['max_worker_count'] = 100
+default['private_chef']['sqeache']['pools']['erchef']['max_queue_size'] = 20
+default['private_chef']['sqeache']['pools']['erchef']['cull_interval'] = 1000
+default['private_chef']['sqeache']['pools']['erchef']['max_age'] = 5000
+default['private_chef']['sqeache']['pools']['bifrost']['initial_worker_count'] = 20
+default['private_chef']['sqeache']['pools']['bifrost']['max_worker_count'] = 100
+default['private_chef']['sqeache']['pools']['bifrost']['max_queue_size'] = 20
+default['private_chef']['sqeache']['pools']['bifrost']['cull_interval'] = 1000
+default['private_chef']['sqeache']['pools']['bifrost']['max_age'] = 5000
 
 ####
 # Erlang Chef Server API
@@ -357,7 +341,9 @@ default['private_chef']['opscode-erchef']['keygen_timeout'] = 1000
 default['private_chef']['opscode-erchef']['keygen_key_size'] = 2048
 default['private_chef']['opscode-erchef']['strict_search_result_acls'] = false
 default['private_chef']['opscode-erchef']['ssl_session_caching']['enabled'] = false
-
+# TODO we'll need to move these attributes...
+default['private_chef']['opscode-erchef']['sql_db_timeout'] = 5000
+default['private_chef']['opscode-erchef']['sql_db_idle_check'] = 5000
 ###
 # Legacy path (required for cookbok migration)
 ###
@@ -595,6 +581,7 @@ default['private_chef']['oc_bifrost']['sql_password'] = "challengeaccepted"
 default['private_chef']['oc_bifrost']['sql_ro_user'] = "bifrost_ro"
 default['private_chef']['oc_bifrost']['sql_ro_password'] = "foreveralone"
 default['private_chef']['oc_bifrost']['sql_db_timeout'] = 5000
+default['private_chef']['oc_bifrost']['sql_db_idle_check'] = 5000
 # Enable extended performance logging data for bifrost.  Setting this to false
 # will cut bifrost request log size approximately in half.
 default['private_chef']['oc_bifrost']['extended_perf_log'] = true

@@ -28,23 +28,24 @@ end
 
 
 sqeache_config = File.join(sqeache_dir, "sys.config")
-
 template sqeache_config do
   source "sqeache.config.erb"
   owner OmnibusHelper.new(node).ownership['owner']
   group OmnibusHelper.new(node).ownership['group']
   mode "644"
-  variables(
-            pg_vip: node['private_chef']['postgresql']['vip'],
+
+  variables(pg_vip: node['private_chef']['postgresql']['vip'],
             pg_port: node['private_chef']['postgresql']['port'],
-            sql_user: node['private_chef']['opscode-erchef']['sql_user'],
-            sql_password: node['private_chef']['opscode-erchef']['sql_password'],
+            oc_erchef: node['private_chef']['opscode-erchef'],
+            oc_bifrost: node['private_chef']['oc_bifrost'],
             sqeache: node['private_chef']['sqeache'],
             pools: node['private_chef']['sqeache']['pools'],
             postgresql: node['private_chef']['postgresql'])
   notifies :run, 'execute[remove_sqeache_siz_files]', :immediately
   # NOte - we'll want to keep both nodes active for sqeache...
   notifies :restart, 'runit_service[sqeache]' unless backend_secondary?
+  sensitive true
+  verify { |path|  ErlangTemplateVerifier.new().verify(node, path)  }
 end
 
 # sqeache still ultimately uses disk_log [1] for request logging, and if

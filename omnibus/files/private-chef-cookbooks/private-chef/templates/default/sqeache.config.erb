@@ -1,6 +1,5 @@
 %% ex: ft=eruby.erlang ts=4 sw=4 et
 %% -*- erlang-indent-level: 4;indent-tabs-mode: nil; fill-column: 92 -*-
-%%
 [
  {sqeache, [
             {ip_mode, [<%=PrivateChef['use_ipv6'] ? "ipv6,ipv4" : "ipv4"%>]},
@@ -8,52 +7,54 @@
             {port, <%= @sqeache['port']%>},
             {acceptor_count, <%= @sqeache['acceptor_count']%>},
             {prepared_statement_files,
-             <% # Why yes, I am am doing this horrible thing for now%>
-             <%= Dir.glob("/opt/opscode/embedded/service/opscode-erchef/lib/*chef*/priv/pgsql_statements.config")%>}
-
-
-           ]
-},
+             %% Why yes, I am quite ashamed of this one, but managing it in a way similar to this
+             %% allows us to keep the keep the queries independent of sqeache itself.
+              [{erchef, <%= Dir.glob("/opt/opscode/embedded/service/opscode-erchef/lib/*chef*/priv/pgsql_statements.config")%>},
+               {bifrost, <%= Dir.glob("/opt/opscode/embedded/service/oc_bifrost/lib/*bifrost*/priv/pgsql_statements.config")%>}]
+            }]},
  {sqerl, [
-          {db_driver_mod, sqerl_pgsql_client},
           {ip_mode, [<%=PrivateChef['use_ipv6'] ? "ipv6,ipv4" : "ipv4"%>]},
-          %% Database connection parameters.
-          {db_host, "<%= @pg_vip%>"},
-          {db_port, <%= @pg_port%>},
-          {db_user, "<%= @sql_user%>"},
-          {db_pass, "<%= @sql_password%>"},
-          {db_name, "opscode_chef"},
-
-          % How long do we wait for a connection from the pool before giving up?
-          {pooler_timeout, <%= @sqeache['db_pool_timeout']%>},
-
-          {idle_check, <%= @sqeache['db_idle_check']%>},
-            % TODO this will be per-db.
-          {prepared_statements, {sqeache_app, statements, []}},
-          {column_transforms, [{<<"created_at">>, {sqerl_transformers, convert_YMDHMS_tuple_to_datetime}},
-                               {<<"updated_at">>, {sqerl_transformers, convert_YMDHMS_tuple_to_datetime}}]}
-         ]
+          {pooler_timeout,<%= @sqeache['db_pool_timeout']%>},
+          {db_driver_mod,sqerl_pgsql_client},
+          {databases,
+           [{erchef, [{db_host, "<%= @pg_vip%>"},
+                      {db_port, <%= @pg_port%>},
+                      {db_user, "<%= @oc_erchef['sql_user']%>"},
+                      {db_pass, "<%= @oc_erchef['sql_password']%>"},
+                      {db_name, "opscode_chef"},
+                      {db_timeout, <%= @oc_erchef['sql_db_timeout']%>},
+                      {idle_check, <%= @oc_erchef['sql_db_idle_check']%>},
+                      {prepared_statements, {sqeache_app, statements, [erchef]}},
+                      {column_transforms, [
+                                           {<<"created_at">>, {sqerl_transformers, convert_YMDHMS_tuple_to_datetime}},
+                                           {<<"updated_at">>, {sqerl_transformers, convert_YMDHMS_tuple_to_datetime}}
+                                          ]} ]},
+            {bifrost, [
+                       {db_host, "<%= @pg_vip%>"},
+                       {db_port, <%= @pg_port%>},
+                       {db_user, "<%= @oc_bifrost['sql_user']%>"},
+                       {db_pass, "<%= @oc_bifrost['sql_password']%>"},
+                       {db_name, "bifrost"},
+                       {db_timeout, <%= @oc_bifrost['sql_db_timeout']%>},
+                       {idle_check, <%= @oc_bifrost['sql_db_idle_check']%>},
+                       {prepared_statements, {sqeache_app, statements, [bifrost]}},
+                       {column_transforms, []} ]}
+           ]} ]
  },
  {pooler, [
+           % TODO - temp disable, gotta rebuild with fixed deps {metrics_module, folsom_metrics},
            {pools, [
-            <% @pools.each_pair do |name, pool|%>
+               <% which = 0 %>
+               <% @pools.each_pair do |name, pool| %>
+               <%   which = which + 1 %>
+               <%   maybe_comma = (which < @pools.length) ? "," : ""%>
                     [{name, <%=name%>},
-                      {max_count,  <%=pool['max_worker_count']%>},
-                      {init_count, <%=pool['initial_worker_count']%>},
-                      {queue_max, <%=pool['max_queue_size']%>},
-                      {start_mfa, {sqerl_client, start_link, []}},
-                      {checkin_mfa, {sqerl_client, checkin}},
-                      {pruning,
-                       [{enabled, <%= pool['pruning']['enabled']%>},
-                        {threshold, <%= pool['pruning']['spindown_threshold']%>},
-                        {frequency, <%= pool['pruning']['spindown_frequency']%>},
-                        {age_threshold, <%= pool['pruning']['age_threshold']%>},
-                        {max_age, <%= pool['pruning']['max_age']%>} ]
-                        }
-                    ]
-             <% end%>
-            ]
-           }
-          ]
- }
+                     {max_count,  <%=pool['max_worker_count']%>},
+                     {init_count, <%=pool['initial_worker_count']%>},
+                     {queue_max, <%=pool['max_queue_size']%>},
+                     {start_mfa, {sqerl_client, start_link, [{pool, <%=name%>}]}},
+                     {cull_interval, {<%= pool['cull_interval']%>, ms}},
+                     {max_age, {<%= pool['max_age']%>, ms}}]<%=maybe_comma%>  %>
+               <% end %>
+                   ]} ]}
 ].
